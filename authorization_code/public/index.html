@@ -1,81 +1,240 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Example of the Authorization Code flow with Spotify</title>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <style type="text/css">
-      #login, #loggedin {
-        display: none;
-      }
-      .text-overflow {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 500px;
-      }
-    </style>
-  </head>
+<head>
+  <title>Example of the Authorization Code flow with Spotify</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 
-  <body>
-    <div class="container">
-      <div id="login">
-        <h1>This is an example of the Authorization Code flow</h1>
-        <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+<body>
+<div class="container">
+  <div id="login">
+    <h1>This is an example of the Authorization Code flow</h1>
+    <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+  </div>
+  <div id="loggedin">
+    <div id="user-profile">
+    </div>
+    <div id="oauth">
+    </div>
+    <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
+    <button class="btn btn-default" id="all-albums">Obtain several albums</button>
+    <button class="btn btn-default" id="open-spotify-player">Open Spotify Player</button>
+  </div>
+  <div id="spotify-player" style="display: none">
+    <h1>Lecteur audio</h1>
+    <div class="player">
+      <div class="player-track">
+        <div class="artist-name"></div>
+        <div class="music-name"></div>
+        <div class="progress-bar">
+          <div class="fillBar"></div>
+        </div>
+        <div class="time"><span id="first-time"></span> / <span id="second-time"></span></div>
       </div>
-      <div id="loggedin">
-        <div id="user-profile">
-        </div>
-        <div id="oauth">
-        </div>
-        <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
+      <div class="circle">
+        <div class="circ"></div>
+        <div id="thumbnail" class="thumbnail"></div>
+      </div>
+      <div class="player-control">
+        <i id="prev" class="prev-btn fas fa-backward"></i>
+        <i id="play" class="play-btn fas fa-play"></i>
+        <i id="next" class="next-btn fas fa-forward"></i>
       </div>
     </div>
-
-    <script id="user-profile-template" type="text/x-handlebars-template">
-      <h1>Logged in as {{display_name}}</h1>
-      <div class="media">
-        <div class="pull-left">
-          <img class="media-object" width="150" src="{{images.0.url}}" />
+    <button id="info-artist"></button>
+    <div class="center">
+      <div class="property-card">
+        <a href="#">
+          <div class="property-image">
+            <div class="property-image-title">
+              <!-- Optional <h5>Card Title</h5> If you want it, turn on the CSS also. -->
+            </div>
+          </div></a>
+        <div class="property-description">
+          <h5> Card Title </h5>
+          <p>Lorem Ipsum Dipsum hortata. Mixcall Horcho. Mixwell Chingo. More Bingo. Lorem Ipum doth be hard.</p>
         </div>
-        <div class="media-body">
-          <dl class="dl-horizontal">
-            <dt>Display name</dt><dd class="clearfix">{{display_name}}</dd>
-            <dt>Id</dt><dd>{{id}}</dd>
-            <dt>Email</dt><dd>{{email}}</dd>
-            <dt>Spotify URI</dt><dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
-            <dt>Link</dt><dd><a href="{{href}}">{{href}}</a></dd>
-            <dt>Profile Image</dt><dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
-            <dt>Country</dt><dd>{{country}}</dd>
-          </dl>
-        </div>
+        <a href="#">
+          <div class="property-social-icons">
+            <!-- I would usually put multipe divs inside here set to flex. Some people might use Ul li. Multiple Solutions -->
+          </div>
+        </a>
       </div>
-    </script>
+    </div>
+    <div id="current-playing">
+      <div class="name-song"></div>
+      <div class="name-album"></div>
+      <div class="name-artist"></div>
+      <div class="release-date"></div>
+    </div>
 
-    <script id="oauth-template" type="text/x-handlebars-template">
-      <h2>oAuth info</h2>
+    </div>
+
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+  </div>
+</div>
+
+<script id="user-profile-template" type="text/x-handlebars-template">
+  <h1>Logged in as {{display_name}}</h1>
+  <div class="media">
+    <div class="pull-left">
+      <img class="media-object" width="150" src="{{images.0.url}}" />
+    </div>
+    <div class="media-body">
       <dl class="dl-horizontal">
-        <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
-        <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}</dd>
+        <dt>Display name</dt><dd class="clearfix">{{display_name}}</dd>
+        <dt>Id</dt><dd>{{id}}</dd>
+        <dt>Email</dt><dd>{{email}}</dd>
+        <dt>Spotify URI</dt><dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
+        <dt>Link</dt><dd><a href="{{href}}">{{href}}</a></dd>
+        <dt>Profile Image</dt><dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
+        <dt>Country</dt><dd>{{country}}</dd>
       </dl>
-    </script>
+    </div>
+  </div>
+</script>
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-    <script>
-      (function() {
+<script id="oauth-template" type="text/x-handlebars-template">
+  <h2>oAuth info</h2>
+  <dl class="dl-horizontal">
+    <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
+    <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}</dd>
+  </dl>
+</script>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script src="https://kit.fontawesome.com/782fb1b5c4.js" crossorigin="anonymous"></script>
+<script>
+
+    (function() {
+
+        function playMusic(stateMusic) {
+            const player = new Spotify.Player({
+                name: 'Web Playback SDK Quick Start Player',
+                getOAuthToken: cb => {
+                    cb(access_token);
+                },
+                volume: 0.5
+            });
+            player.getCurrentState().then(state => {
+                if (!state) {
+                    console.error('User is not playing music through the Web Playback SDK');
+                    return;
+                }
+                timeout = setTimeout(doAjax, interval);
+
+                let current_track = 'current';
+                if (stateMusic === "current") {
+                    current_track = state.track_window.current_track;
+                } else if (stateMusic === "next") {
+                    current_track = state.track_window.next_tracks[0];
+                    state['paused'] = true;
+                } else {
+                    current_track = state.track_window.previous_tracks[0];
+                    console.log(current_track);
+                    if (current_track === undefined) {
+                        current_track = state.track_window.current_track;;
+                    }
+                    state['paused'] = true;
+                }
+                let id_track = current_track['id'];
+                $.ajax({
+                    url: 'https://api.spotify.com/v1/tracks/' + id_track,
+                    headers: {
+                        'Authorization': 'Bearer ' + access_token
+                    }
+                }).done(function(data) {
+                    let album = data['album']['name'];
+                    let song = data['name'];
+                    let artist = data['artists'][0]['name'];
+                    let release_date = data['album']['release_date'];
+                    $('.name-album').text(album);
+                    $('.name-song').text(song);
+                    $('.name-artist').text(artist);
+                    $('.release-date').text(release_date);
+                });
+                let imageUrl = current_track['album']['images'][0]['url'];
+                $('#thumbnail').css("background-image", "url(" + imageUrl + ")");
+                $("#thumbnail").removeClass("active");
+                $("#thumbnail").addClass("active");
+                $(".play-btn:before").css("padding-left", 300);
+                let duration_ms = convertMsToMinutesSeconds(current_track['duration_ms']);
+                $('#second-time').text(duration_ms);
+
+                $('.artist-name').text(current_track['artists'][0]['name']);
+                $('.music-name').text(current_track['name']);
+                console.log(state['paused']);
+                if (state['paused']) {
+
+                    $("#play").addClass("fa-pause");
+                    $("#play").removeClass("fa-play");
+                    player.resume();
+
+                } else {
+
+                    $("#play").addClass("fa-play");
+                    $("#play").removeClass("fa-pause");
+                    $("#thumbnail").removeClass("active");
+                    player.pause();
+                    if (timeout) {
+                        clearTimeout(timeout);
+                        timeout = 0;
+                    }
+                }
+            });
+        }
 
         /**
          * Obtains parameters from the hash of the URL
          * @return Object
          */
         function getHashParams() {
-          var hashParams = {};
-          var e, r = /([^&;=]+)=?([^&;]*)/g,
-              q = window.location.hash.substring(1);
-          while ( e = r.exec(q)) {
-             hashParams[e[1]] = decodeURIComponent(e[2]);
-          }
-          return hashParams;
+            var hashParams = {};
+            var e, r = /([^&;=]+)=?([^&;]*)/g,
+                q = window.location.hash.substring(1);
+            while ( e = r.exec(q)) {
+                hashParams[e[1]] = decodeURIComponent(e[2]);
+            }
+            return hashParams;
+        }
+
+        /**
+         * Transform num into num with only 2 digits
+         * @param num
+         * @returns {string}
+         */
+        function padTo2Digits(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        /**
+         * Convert ms to Minutes:Seconds with 2 digits
+         * @param milliseconds
+         * @returns {string}
+         */
+        function convertMsToMinutesSeconds(milliseconds) {
+            const minutes = Math.floor(milliseconds / 60000);
+            const seconds = Math.round((milliseconds % 60000) / 1000);
+
+            return seconds === 60
+                ? `${minutes + 1}:00`
+                : `${minutes}:${padTo2Digits(seconds)}`;
+        }
+
+        let timeout = 0;
+        let interval = 1000;
+        function doAjax() {
+            $.ajax({
+                url: 'https://api.spotify.com/v1/me/player/currently-playing',
+                headers: {
+                    'Authorization': 'Bearer ' + access_token
+                },
+            }).done(function (data) {
+                let progress_ms = convertMsToMinutesSeconds(data['progress_ms']);
+                $('#first-time').text(progress_ms);
+                timeout = setTimeout(doAjax, interval);
+            });
         }
 
         var userProfileSource = document.getElementById('user-profile-template').innerHTML,
@@ -93,50 +252,142 @@
             error = params.error;
 
         if (error) {
-          alert('There was an error during the authentication');
+            alert('There was an error during the authentication');
         } else {
-          if (access_token) {
-            // render oauth info
-            oauthPlaceholder.innerHTML = oauthTemplate({
-              access_token: access_token,
-              refresh_token: refresh_token
+            if (access_token) {
+                // render oauth info
+                oauthPlaceholder.innerHTML = oauthTemplate({
+                    access_token: access_token,
+                    refresh_token: refresh_token
+                });
+
+                $.ajax({
+                    url: 'https://api.spotify.com/v1/me',
+                    headers: {
+                        'Authorization': 'Bearer ' + access_token
+                    },
+                    success: function(response) {
+                        console.log(response);
+                        userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+
+                        $('#login').hide();
+                        $('#loggedin').show();
+                    }
+                });
+            } else {
+                // render initial screen
+                $('#login').show();
+                $('#loggedin').hide();
+            }
+
+            document.getElementById('obtain-new-token').addEventListener('click', function() {
+                $.ajax({
+                    url: '/refresh_token',
+                    data: {
+                        'refresh_token': refresh_token
+                    }
+                }).done(function(data) {
+                    access_token = data.access_token;
+                    oauthPlaceholder.innerHTML = oauthTemplate({
+                        access_token: access_token,
+                        refresh_token: refresh_token
+                    });
+                });
+            }, false);
+
+            document.getElementById('all-albums').addEventListener('click', function() {
+                $.ajax({
+                    url: 'https://api.spotify.com/v1/me/player/devices',
+                    headers: {
+                        'Authorization': 'Bearer ' + access_token
+                    },
+                }).done(function(data) {
+                    console.log(data);
+                });
+            }, false);
+
+            $('#info-artist').click(function () {
+                const player = new Spotify.Player({
+                    name: 'Web Playback SDK Quick Start Player',
+                    getOAuthToken: cb => {
+                        cb(access_token);
+                    },
+                    volume: 0.5
+                });
+                player.getCurrentState().then(state => {
+                    let current_track = state.track_window.current_track;
+                    let id_track = current_track['id'];
+                    $.ajax({
+                        url: 'https://api.spotify.com/v1/tracks/' + id_track,
+                        headers: {
+                            'Authorization': 'Bearer ' + access_token
+                        }
+                    }).done(function(data) {
+                        console.log(data);
+                    });
+                });
+
             });
 
-            $.ajax({
-                url: 'https://api.spotify.com/v1/me',
-                headers: {
-                  'Authorization': 'Bearer ' + access_token
-                },
-                success: function(response) {
-                  userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+            document.getElementById('open-spotify-player').addEventListener('click', function() {
+                $('#loggedin').hide();
+                $('#spotify-player').show();
+            }, false);
 
-                  $('#login').hide();
-                  $('#loggedin').show();
-                }
-            });
-          } else {
-              // render initial screen
-              $('#login').show();
-              $('#loggedin').hide();
-          }
+            window.onSpotifyWebPlaybackSDKReady = () => {
+                const player = new Spotify.Player({
+                    name: 'Web Playback SDK Quick Start Player',
+                    getOAuthToken: cb => {
+                        cb(access_token);
+                    },
+                    volume: 0.5
+                });
 
-          document.getElementById('obtain-new-token').addEventListener('click', function() {
-            $.ajax({
-              url: '/refresh_token',
-              data: {
-                'refresh_token': refresh_token
-              }
-            }).done(function(data) {
-              access_token = data.access_token;
-              oauthPlaceholder.innerHTML = oauthTemplate({
-                access_token: access_token,
-                refresh_token: refresh_token
-              });
-            });
-          }, false);
+                player.addListener('ready', ({device_id}) => {
+                    console.log('Ready with Device ID', device_id);
+                });
+
+                // Not Ready
+                player.addListener('not_ready', ({device_id}) => {
+                    console.log('Device ID has gone offline', device_id);
+                });
+
+                player.addListener('initialization_error', ({message}) => {
+                    console.error(message);
+                });
+
+                player.addListener('authentication_error', ({message}) => {
+                    console.error(message);
+                });
+
+                player.addListener('account_error', ({message}) => {
+                    console.error(message);
+                });
+
+                $('#play').click (function () {
+                    playMusic('current');
+                });
+
+                $('#next').click(function () {
+                    player.nextTrack().then(state => {
+
+                    });
+                    playMusic('next');
+                });
+
+                $('#prev').click(function () {
+                    player.previousTrack().then(state => {
+
+                    });
+                    playMusic('prev');
+                });
+
+                player.connect();
+            }
+
         }
-      })();
-    </script>
-  </body>
+    })();
+</script>
+</body>
 </html>
 
