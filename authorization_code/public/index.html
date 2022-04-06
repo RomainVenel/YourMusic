@@ -149,10 +149,12 @@
                     let song = data['name'];
                     let artist = data['artists'][0]['name'];
                     let release_date = data['album']['release_date'];
+                    let imageAlbum = current_track['album']['images'][0]['url'];
                     $('.name-album').text(album);
                     $('.name-song').text(song);
                     $('.name-artist').text(artist);
                     $('.release-date').text(release_date);
+                    $('.property-image').css("background-image", "url(" + imageAlbum + ")");
                 });
                 let imageUrl = current_track['album']['images'][0]['url'];
                 $('#thumbnail').css("background-image", "url(" + imageUrl + ")");
