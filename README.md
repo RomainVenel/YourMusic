@@ -5,8 +5,6 @@ This project contains basic demos showing the different OAuth 2.0 flows for [aut
 These examples cover:
 
 * Authorization Code flow
-* Client Credentials flow
-* Implicit Grant flow
 
 ## Installation
 
