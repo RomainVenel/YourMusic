@@ -8,19 +8,10 @@
 <body>
 <div class="container">
   <div id="login">
-    <h1>This is an example of the Authorization Code flow</h1>
     <a href="/login" class="btn btn-primary">Log in with Spotify</a>
   </div>
-  <div id="loggedin">
-    <div id="user-profile">
-    </div>
-    <div id="oauth">
-    </div>
-    <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
-    <button class="btn btn-default" id="all-albums">Obtain several albums</button>
-    <button class="btn btn-default" id="open-spotify-player">Open Spotify Player</button>
-  </div>
-  <div id="spotify-player" style="display: none">
+  <div id="oauth"></div>
+  <div id="spotify-player" style="display: block">
     <h1>Lecteur audio</h1>
     <div class="player">
       <div class="player-track">
@@ -39,18 +30,6 @@
         <i id="prev" class="prev-btn fas fa-backward"></i>
         <i id="play" class="play-btn fas fa-play"></i>
         <i id="next" class="next-btn fas fa-forward"></i>
-      </div>
-    </div>
-    <button id="info-artist"></button>
-
-    <div class="property-card">
-      <a href="#">
-        <div class="property-image">
-        </div></a>
-      <div class="property-description">
-        <h5></h5>
-        <p class="album-name"></p>
-        <p class="song-name"></p>
       </div>
     </div>
 
@@ -236,10 +215,6 @@
             userProfileTemplate = Handlebars.compile(userProfileSource),
             userProfilePlaceholder = document.getElementById('user-profile');
 
-        var oauthSource = document.getElementById('oauth-template').innerHTML,
-            oauthTemplate = Handlebars.compile(oauthSource),
-            oauthPlaceholder = document.getElementById('oauth');
-
         var params = getHashParams();
 
         var access_token = params.access_token,
@@ -250,11 +225,6 @@
             alert('There was an error during the authentication');
         } else {
             if (access_token) {
-                // render oauth info
-                oauthPlaceholder.innerHTML = oauthTemplate({
-                    access_token: access_token,
-                    refresh_token: refresh_token
-                });
 
                 $.ajax({
                     url: 'https://api.spotify.com/v1/me',
@@ -262,76 +232,19 @@
                         'Authorization': 'Bearer ' + access_token
                     },
                     success: function(response) {
-                        console.log(response);
-                        userProfilePlaceholder.innerHTML = userProfileTemplate(response);
 
                         $('#login').hide();
                         $('#loggedin').show();
                     }
                 });
             } else {
-                // render initial screen
                 $('#login').show();
                 $('#loggedin').hide();
             }
 
-            document.getElementById('obtain-new-token').addEventListener('click', function() {
-                $.ajax({
-                    url: '/refresh_token',
-                    data: {
-                        'refresh_token': refresh_token
-                    }
-                }).done(function(data) {
-                    access_token = data.access_token;
-                    oauthPlaceholder.innerHTML = oauthTemplate({
-                        access_token: access_token,
-                        refresh_token: refresh_token
-                    });
-                });
-            }, false);
-
-            document.getElementById('all-albums').addEventListener('click', function() {
-                $.ajax({
-                    url: 'https://api.spotify.com/v1/me/player/devices',
-                    headers: {
-                        'Authorization': 'Bearer ' + access_token
-                    },
-                }).done(function(data) {
-                    console.log(data);
-                });
-            }, false);
-
-            $('#info-artist').click(function () {
-                const player = new Spotify.Player({
-                    name: 'Web Playback SDK Quick Start Player',
-                    getOAuthToken: cb => {
-                        cb(access_token);
-                    },
-                    volume: 0.5
-                });
-                player.getCurrentState().then(state => {
-                    let current_track = state.track_window.current_track;
-                    let id_track = current_track['id'];
-                    $.ajax({
-                        url: 'https://api.spotify.com/v1/tracks/' + id_track,
-                        headers: {
-                            'Authorization': 'Bearer ' + access_token
-                        }
-                    }).done(function(data) {
-                        console.log(data);
-                    });
-                });
-
-            });
-
-            document.getElementById('open-spotify-player').addEventListener('click', function() {
-                $('#loggedin').hide();
-                $('#spotify-player').show();
-            }, false);
-
             window.onSpotifyWebPlaybackSDKReady = () => {
                 const player = new Spotify.Player({
-                    name: 'Web Playback SDK Quick Start Player',
+                    name: 'Ton Playback',
                     getOAuthToken: cb => {
                         cb(access_token);
                     },
